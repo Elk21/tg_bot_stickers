@@ -1,10 +1,10 @@
 import logging
 import signal
 import sys
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-import config
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, Application, ConversationHandler
+from config import TELEGRAM_BOT_TOKEN
 import nest_asyncio
-from src.handlers import start, handle_message
+from src.handlers import start, generate_sticker, add_sticker, create_new_pack
 
 # Enable logging
 logging.basicConfig(
@@ -14,14 +14,21 @@ logger = logging.getLogger(__name__)
 
 async def main() -> None:
     # Create app based on token from config
-    application = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).build()
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    conv_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND, generate_sticker)],
+    states={
+        1: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_sticker)],
+        2: [MessageHandler(filters.TEXT & ~filters.COMMAND, create_new_pack)],
+    },
+    fallbacks=[CommandHandler("start", start), MessageHandler(filters.TEXT & ~filters.COMMAND, start)],
+)
+    app.add_handler(conv_handler)
 
-    # Register commands and handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # Start bot
-    await application.run_polling()
+    await app.run_polling()
 
 def signal_handler(sig, frame):
     print('Exiting gracefully...')

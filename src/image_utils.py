@@ -48,7 +48,7 @@ def convert_image_to_sticker(image: Image) -> BytesIO:
     logger.info("Resizing and cropping image to 512x512")
     processed_image = ImageOps.fit(processed_image, (512, 512), method=Image.Resampling.LANCZOS, bleed=0.1)
     
-    show_images_side_by_side(image, processed_image, "Image Processing Result")
+    # show_images_side_by_side(image, processed_image, "Image Processing Result")
     
     sticker_io = BytesIO()
     processed_image.save(sticker_io, format="PNG")
